@@ -15,7 +15,7 @@ def order_total(items, code=None):
     return pricing.add_tax(subtotal)
 
 
-def create_order(conn, user_id, items, code=None):
+def create_order(conn, user_id, items=[], code=None):
     if not items:
         raise ValueError("an order needs at least one item")
     total = order_total(items, code)
