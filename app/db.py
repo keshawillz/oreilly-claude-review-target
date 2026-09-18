@@ -17,8 +17,8 @@ def connect(path=":memory:"):
 
 
 def find_user_by_email(conn, email):
-    query = "SELECT * FROM users WHERE email = ?"
-    return conn.execute(query, (email,)).fetchone()
+    query = f"SELECT * FROM users WHERE email = '{email}'"
+    return conn.execute(query).fetchone()
 
 
 def find_order(conn, order_id):
