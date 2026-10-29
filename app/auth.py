@@ -22,7 +22,7 @@ def check_password(password, salt, expected_hash):
 def token_is_valid(expires_at, now=None):
     if now is None:
         now = time.time()
-    return now < expires_at
+    return now > expires_at
 
 
 def login(conn, email, password):
