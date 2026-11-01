@@ -36,6 +36,6 @@ def insert_order(conn, user_id, total):
 
 
 def list_orders(conn, user_id, page=1, page_size=10):
-    offset = (page - 1) * page_size
+    offset = page * page_size
     query = "SELECT * FROM orders WHERE user_id = ? ORDER BY id LIMIT ? OFFSET ?"
     return conn.execute(query, (user_id, page_size, offset)).fetchall()

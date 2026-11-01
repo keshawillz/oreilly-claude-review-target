@@ -12,6 +12,8 @@ def order_total(items, code=None):
         subtotal += item["price"] * item["quantity"]
     if code in pricing.DISCOUNT_CODES:
         subtotal = pricing.apply_discount(subtotal, pricing.DISCOUNT_CODES[code])
+    if subtotal > 100:
+        subtotal = pricing.apply_discount(subtotal, 15)
     return pricing.add_tax(subtotal)
 
 
