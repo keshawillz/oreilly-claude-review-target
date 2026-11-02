@@ -12,7 +12,20 @@ jobs:
       id-token: write                # lets the Claude GitHub App post comments
     steps:
       - uses: actions/checkout@v6
-      - uses: anthropics/claude-code-action@v1
+
+      # 1. Bring back the findings from the last run on this PR
+      - uses: actions/cache@v4
+        with:
+          path: state/previous-findings.json
+          key: findings-${{ github.event.number }}-${{ github.run_id }}
+          restore-keys: findings-${{ github.event.number }}-
+
+      - id: schema
+        run: echo "json=$(jq -c . schemas/findings.json)" >> "$GITHUB_OUTPUT"
+
+      # 2. Review. The Skill reads state/previous-findings.json if it exists
+      - id: review
+        uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: "/pr-review ${{ github.event.number }}"
@@ -24,4 +37,18 @@ jobs:
             --append-system-prompt-file prompts/reviewer.md
             --allowedTools "Read,Grep,Bash(gh pr diff:*),Bash(gh pr view:*),mcp__github_inline_comment__create_inline_comment"
             --disallowedTools "Edit,Write,WebFetch"
+            --json-schema '${{ steps.schema.outputs.json }}'
 
+      # 3. Save this run's findings for the next push. Skipped if the review returned nothing,
+      #    so a failed run never overwrites the last good findings.
+      - if: steps.review.outputs.structured_output != ''
+        env:
+          FINDINGS: ${{ steps.review.outputs.structured_output }}
+        run: mkdir -p state && echo "$FINDINGS" > state/previous-findings.json
+
+      # 4. Keep a copy you can audit
+      - if: steps.review.outputs.structured_output != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: findings-${{ github.run_id }}
+          path: state/previous-findings.json
